@@ -52,10 +52,10 @@ export default function Home() {
   // Fetch reading information from URL params or localStorage
   useEffect(() => {
     // Check if surah and ayat are in URL params first
-    const surahParam = searchParams.get('surah');
-    const ayatParam = searchParams.get('ayat');
-    const dayParam = searchParams.get('day');
-    
+    const surahParam = searchParams.get("surah");
+    const ayatParam = searchParams.get("ayat");
+    const dayParam = searchParams.get("day");
+
     let dayToUse = 1;
     let foundFromUrl = false;
 
@@ -63,25 +63,27 @@ export default function Home() {
     if (dayParam) {
       dayToUse = parseInt(dayParam, 10);
       foundFromUrl = true;
-    } 
+    }
     // If we have surah param, find which day contains it
     else if (surahParam) {
       const surahNumber = parseInt(surahParam, 10);
-      const ayatRange = ayatParam ? ayatParam.split('-').map(Number) : null;
-      
+      const ayatRange = ayatParam ? ayatParam.split("-").map(Number) : null;
+
       // Find the day that contains this surah and possibly verse range
       for (let i = 0; i < readingPlan.length; i++) {
         const day = readingPlan[i];
         for (const surah of day.surah) {
           if (surah.number === surahNumber) {
             // If we have ayat range, check if it falls within this day's range
-            if (ayatRange && 
-                surah.verses[0] <= ayatRange[0] && 
-                surah.verses[1] >= ayatRange[1]) {
+            if (
+              ayatRange &&
+              surah.verses[0] <= ayatRange[0] &&
+              surah.verses[1] >= ayatRange[1]
+            ) {
               dayToUse = i + 1; // Convert from 0-indexed to 1-indexed
               foundFromUrl = true;
               break;
-            } 
+            }
             // If no ayat range, just use the day with this surah
             else if (!ayatRange) {
               dayToUse = i + 1;
@@ -114,7 +116,7 @@ export default function Home() {
 
     setCurrentDayNumber(dayToUse);
     updateReadingContent(dayToUse);
-    
+
     // If we found params in URL but they're not in localStorage, update localStorage
     if (foundFromUrl) {
       localStorage.setItem("currentReadingDay", dayToUse.toString());
@@ -160,32 +162,38 @@ export default function Home() {
       updateUrlParams({
         day: dayNum,
         surah: firstSurah.number,
-        ayat: `${firstSurah.verses[0]}-${firstSurah.verses[1]}`
+        ayat: `${firstSurah.verses[0]}-${firstSurah.verses[1]}`,
       });
     }
   };
 
   // Helper function to update URL parameters without full page reload
-  const updateUrlParams = ({ day, surah, ayat }) => {
+  interface UrlParams {
+    day?: number;
+    surah?: number;
+    ayat?: string;
+  }
+
+  const updateUrlParams = ({ day, surah, ayat }: UrlParams) => {
     const params = new URLSearchParams();
-    if (day) params.set('day', day.toString());
-    if (surah) params.set('surah', surah.toString());
-    if (ayat) params.set('ayat', ayat.toString());
-    
+    if (day) params.set("day", day.toString());
+    if (surah) params.set("surah", surah.toString());
+    if (ayat) params.set("ayat", ayat.toString());
+
     // Replace the current URL with the new parameters
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const resumeReading = () => {
     setIsPlaying(!isPlaying);
-    
+
     // When user plays audio, ensure the URL reflects current reading position
     if (!isPlaying && readingContent.surahs.length > 0) {
       const currentSurah = readingContent.surahs[0];
       updateUrlParams({
         day: currentDayNumber,
         surah: currentSurah.number,
-        ayat: currentSurah.verses
+        ayat: currentSurah.verses,
       });
     }
   };
@@ -303,14 +311,16 @@ export default function Home() {
             {readingContent.surahs.map((surah, index) => (
               <div key={index}>
                 <h3 className="text-lg font-medium mb-1">
-                  <Button 
-                    variant="link" 
+                  <Button
+                    variant="link"
                     className="p-0 h-auto font-medium"
-                    onClick={() => updateUrlParams({
-                      day: currentDayNumber,
-                      surah: surah.number,
-                      ayat: surah.verses
-                    })}
+                    onClick={() =>
+                      updateUrlParams({
+                        day: currentDayNumber,
+                        surah: surah.number,
+                        ayat: surah.verses,
+                      })
+                    }
                   >
                     Surah {surah.name} ({surah.number})
                   </Button>
@@ -320,11 +330,11 @@ export default function Home() {
             ))}
 
             <div className="space-y-2 mt-4"></div>
-              <div className="flex justify-between text-sm">
-                <span>Overall Progress</span>
-                <span>{Math.round((currentDayNumber / 27) * 100)}%</span>
-              </div>
-              <Progress value={(currentDayNumber / 27) * 100} className="h-2" />
+            <div className="flex justify-between text-sm">
+              <span>Overall Progress</span>
+              <span>{Math.round((currentDayNumber / 27) * 100)}%</span>
+            </div>
+            <Progress value={(currentDayNumber / 27) * 100} className="h-2" />
           </div>
         </Card>
 
