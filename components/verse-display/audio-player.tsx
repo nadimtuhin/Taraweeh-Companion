@@ -11,11 +11,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   PlayCircle,
   PauseCircle,
   Repeat,
-  SkipBack,
-  SkipForward,
+  Rewind,
+  FastForward,
   Volume2,
   Download,
 } from "lucide-react";
@@ -154,64 +160,113 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
       />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setIsLooping(!isLooping)}
-            className={isLooping ? "text-primary" : ""}
-          >
-            <Repeat className="h-4 w-4" />
-          </Button>
-          <Select
-            value={playbackRate.toString()}
-            onValueChange={(value) =>
-              handlePlaybackRateChange(parseFloat(value))
-            }
-          >
-            <SelectTrigger className="w-[80px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="0.75">0.75x</SelectItem>
-              <SelectItem value="1">1x</SelectItem>
-              <SelectItem value="1.25">1.25x</SelectItem>
-              <SelectItem value="1.5">1.5x</SelectItem>
-              <SelectItem value="2">2x</SelectItem>
-            </SelectContent>
-          </Select>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsLooping(!isLooping)}
+                  className={isLooping ? "text-primary" : ""}
+                >
+                  <Repeat className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isLooping ? "Disable repeat" : "Enable repeat"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Select
+                  value={playbackRate.toString()}
+                  onValueChange={(value) =>
+                    handlePlaybackRateChange(parseFloat(value))
+                  }
+                >
+                  <SelectTrigger className="w-[80px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0.75">0.75x</SelectItem>
+                    <SelectItem value="1">1x</SelectItem>
+                    <SelectItem value="1.25">1.25x</SelectItem>
+                    <SelectItem value="1.5">1.5x</SelectItem>
+                    <SelectItem value="2">2x</SelectItem>
+                  </SelectContent>
+                </Select>
+              </TooltipTrigger>
+              <TooltipContent>Playback speed</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={skipBackward}
-          >
-            <SkipBack className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="default"
-            size="icon"
-            className="h-12 w-12"
-            onClick={handlePlayPause}
-          >
-            {isPlaying ? (
-              <PauseCircle className="h-8 w-8" />
-            ) : (
-              <PlayCircle className="h-8 w-8" />
-            )}
-          </Button>
-          <Button variant="outline" size="icon" onClick={skipForward}>
-            <SkipForward className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={skipBackward}
+                >
+                  <Rewind className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Rewind 5 seconds</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="h-12 w-12"
+                  onClick={handlePlayPause}
+                >
+                  {isPlaying ? (
+                    <PauseCircle className="h-8 w-8" />
+                  ) : (
+                    <PlayCircle className="h-8 w-8" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isPlaying ? "Pause" : "Play"}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={skipForward}>
+                  <FastForward className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Forward 5 seconds</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <div className="flex items-center gap-2">
-          <Volume2 className="h-4 w-4" />
-          <Slider
-            value={[volume]}
-            max={100}
-            className="w-[100px]"
-            onValueChange={handleVolumeChange}
-          />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2">
+                  <Volume2 className="h-4 w-4" />
+                  <Slider
+                    value={[volume]}
+                    max={100}
+                    className="w-[100px]"
+                    onValueChange={handleVolumeChange}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Volume</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
       
