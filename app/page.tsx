@@ -8,7 +8,7 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import QuranReaderClientComponent from "./QuranReaderClientComponent";
-
+import Link from "next/link";
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
@@ -18,9 +18,15 @@ export default function Home() {
           <NavigationMenu>
             <NavigationMenuList className="gap-6">
               <NavigationMenuItem>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Day Selection
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2"
+                  asChild
+                >
+                  <Link href="/day-selection">
+                    <Calendar className="w-4 h-4" />
+                    Day Selection
+                  </Link>
                 </Button>
               </NavigationMenuItem>
               <NavigationMenuItem>
