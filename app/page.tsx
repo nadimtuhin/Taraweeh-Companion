@@ -1,11 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, BookMarked, Settings, PlayCircle, PauseCircle } from "lucide-react";
+import {
+  Calendar,
+  BookMarked,
+  Settings,
+  PlayCircle,
+  PauseCircle,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 
@@ -22,8 +32,8 @@ export default function Home() {
           <NavigationMenu>
             <NavigationMenuList className="gap-6">
               <NavigationMenuItem>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="flex items-center gap-2"
                   onClick={() => router.push("/day-selection")}
                 >
@@ -32,8 +42,8 @@ export default function Home() {
                 </Button>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="flex items-center gap-2"
                   onClick={() => router.push("/bookmarks")}
                 >
@@ -42,8 +52,8 @@ export default function Home() {
                 </Button>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="flex items-center gap-2"
                   onClick={() => router.push("/settings")}
                 >
@@ -62,7 +72,9 @@ export default function Home() {
           <div className="flex justify-between items-start mb-6">
             <div>
               <h2 className="text-2xl font-semibold mb-2">Today's Reading</h2>
-              <p className="text-muted-foreground">{format(new Date(), "MMMM d, yyyy")}</p>
+              <p className="text-muted-foreground">
+                {format(new Date(), "MMMM d, yyyy")}
+              </p>
             </div>
             <Button
               variant="outline"
@@ -76,13 +88,13 @@ export default function Home() {
               )}
             </Button>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-medium mb-2">Surah Al-Baqarah</h3>
               <p className="text-muted-foreground">Verses 1-5</p>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Daily Progress</span>
@@ -97,8 +109,10 @@ export default function Home() {
         <Card className="p-6 bg-primary/5">
           <h3 className="text-lg font-medium mb-3">Daily Inspiration</h3>
           <blockquote className="text-muted-foreground italic">
-            "Indeed, with hardship comes ease." 
-            <footer className="text-sm mt-2 not-italic">— Surah Ash-Sharh [94:6]</footer>
+            "Indeed, with hardship comes ease."
+            <footer className="text-sm mt-2 not-italic">
+              — Surah Ash-Sharh [94:6]
+            </footer>
           </blockquote>
         </Card>
       </main>
