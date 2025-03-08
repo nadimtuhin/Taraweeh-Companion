@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
@@ -9,9 +9,13 @@ import {
   BookmarkCheck,
   Languages,
   Loader2,
+  Eye,
+  EyeOff,
+  PlayCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -71,6 +75,10 @@ function VerseDisplayContent() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("english");
   const [selectedReciter, setSelectedReciter] = useState("mishary");
+  const [showTranslation, setShowTranslation] = useState(true);
+  const [showArabic, setShowArabic] = useState(true);
+  const [autoNext, setAutoNext] = useState(false);
+  const autoNextTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch the Ayah data using the hook
   const {
@@ -120,7 +128,7 @@ function VerseDisplayContent() {
   }, [currentSurah, currentAyah, currentDay, ayahData]);
 
   // Function to navigate to the next Ayah
-  const goToNextAyah = () => {
+  const goToNextAyah = useCallback(() => {
     // Find the current day entry
     const dayEntry = dayPlanData.find((entry) =>
       entry.name.includes(`day ${currentDay}`)
@@ -156,10 +164,10 @@ function VerseDisplayContent() {
       setCurrentDay(nextDay);
       // The useEffect will handle setting the first surah and verse of the next day
     }
-  };
+  }, [currentAyah, currentDay, currentSurah, dayPlanData]);
 
   // Function to navigate to the previous Ayah
-  const goToPreviousAyah = () => {
+  const goToPreviousAyah = useCallback(() => {
     // If we're not at the first verse
     if (currentAyah > 1) {
       setCurrentAyah(currentAyah - 1);
@@ -203,7 +211,55 @@ function VerseDisplayContent() {
         }
       }
     }
-  };
+  }, [currentAyah, currentDay, currentSurah, dayPlanData]);
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent default behavior for arrow keys
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      switch (e.key) {
+        case "ArrowUp":
+        case "ArrowLeft":
+          goToPreviousAyah();
+          break;
+        case "ArrowDown":
+        case "ArrowRight":
+          goToNextAyah();
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [goToNextAyah, goToPreviousAyah]);
+
+  // Handle auto-next functionality
+  useEffect(() => {
+    if (autoNext && ayahData) {
+      // Clear any existing timer
+      if (autoNextTimerRef.current) {
+        clearTimeout(autoNextTimerRef.current);
+      }
+
+      // Set a new timer for auto-next (15 seconds)
+      autoNextTimerRef.current = setTimeout(() => {
+        goToNextAyah();
+      }, 15000); // 15 seconds
+    }
+
+    return () => {
+      // Clean up timer on unmount or when autoNext changes
+      if (autoNextTimerRef.current) {
+        clearTimeout(autoNextTimerRef.current);
+      }
+    };
+  }, [autoNext, ayahData, goToNextAyah]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -219,17 +275,31 @@ function VerseDisplayContent() {
               Back to Day Selection
             </Button>
             <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setIsBookmarked(!isBookmarked)}
-              >
-                {isBookmarked ? (
-                  <BookmarkCheck className="h-5 w-5 text-green-500" />
-                ) : (
-                  <BookmarkPlus className="h-5 w-5" />
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsBookmarked(!isBookmarked)}
+                >
+                  {isBookmarked ? (
+                    <BookmarkCheck className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <BookmarkPlus className="h-5 w-5" />
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowTranslation(!showTranslation)}
+                  title={showTranslation ? "Hide Translation" : "Show Translation"}
+                >
+                  {showTranslation ? (
+                    <Eye className="h-5 w-5" />
+                  ) : (
+                    <EyeOff className="h-5 w-5" />
+                  )}
+                </Button>
+              </div>
               <Select
                 value={selectedLanguage}
                 onValueChange={setSelectedLanguage}
@@ -279,6 +349,8 @@ function VerseDisplayContent() {
                 translation={ayahData.english}
                 selectedReciter={selectedReciter}
                 setSelectedReciter={setSelectedReciter}
+                showTranslation={showTranslation}
+                showArabic={showArabic}
               />
 
               {/* Audio Player */}
@@ -297,7 +369,54 @@ function VerseDisplayContent() {
               hasAudio={!!(ayahData.audio && ayahData.audio["1"])}
             />
 
-            <div className="flex justify-between mt-8">
+            <div className="flex flex-col gap-4 mt-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="show-arabic" 
+                      checked={showArabic} 
+                      onCheckedChange={(checked) => setShowArabic(checked as boolean)}
+                    />
+                    <label
+                      htmlFor="show-arabic"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Show Arabic
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="show-translation" 
+                      checked={showTranslation} 
+                      onCheckedChange={(checked) => setShowTranslation(checked as boolean)}
+                    />
+                    <label
+                      htmlFor="show-translation"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Show Translation
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="auto-next" 
+                      checked={autoNext} 
+                      onCheckedChange={(checked) => setAutoNext(checked as boolean)}
+                    />
+                    <label
+                      htmlFor="auto-next"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Auto Next (15s)
+                    </label>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Use arrow keys (←→↑↓) to navigate
+                </div>
+              </div>
+              <div className="flex justify-between">
               <Button
                 variant="outline"
                 className="flex items-center gap-2"
@@ -314,6 +433,7 @@ function VerseDisplayContent() {
                 Next Verse
                 <ChevronRight className="w-4 h-4" />
               </Button>
+              </div>
             </div>
           </>
         ) : null}

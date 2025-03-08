@@ -13,6 +13,8 @@ interface VerseContentProps {
   translation: string;
   selectedReciter: string;
   setSelectedReciter: (id: string) => void;
+  showTranslation?: boolean;
+  showArabic?: boolean;
 }
 
 export function VerseContent({
@@ -23,6 +25,8 @@ export function VerseContent({
   translation,
   selectedReciter,
   setSelectedReciter,
+  showTranslation = true,
+  showArabic = true,
 }: VerseContentProps) {
   const [fontSize, setFontSize] = useState(24);
 
@@ -58,12 +62,16 @@ export function VerseContent({
           </h2>
           <p className="text-sm text-muted-foreground">Day {day}</p>
         </div>
-        <div className="text-center" style={{ fontSize: `${fontSize}px` }}>
-          <p className="font-arabic leading-loose">{arabic}</p>
-        </div>
-        <div className="text-lg">
-          <p className="text-foreground">{translation}</p>
-        </div>
+        {showArabic && (
+          <div className="text-center" style={{ fontSize: `${fontSize}px` }}>
+            <p className="font-arabic leading-loose">{arabic}</p>
+          </div>
+        )}
+        {showTranslation && (
+          <div className="text-lg">
+            <p className="text-foreground">{translation}</p>
+          </div>
+        )}
       </div>
     </>
   );
