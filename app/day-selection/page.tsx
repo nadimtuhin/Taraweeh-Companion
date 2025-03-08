@@ -23,6 +23,7 @@ interface RawDayEntry {
 
 interface SurahInfo {
   number: string;
+  name: string;  // Added name field
   verses: string;
 }
 
@@ -46,13 +47,14 @@ const transformReadingPlan = (completedDays: number[]): TransformedDayEntry[] =>
     const surahInfo: SurahInfo[] = day.surah.map((surahEntry) => {
       return {
         number: surahEntry.number.toString(),
+        name: surahEntry.name,  // Include the surah name
         verses: `${surahEntry.verses[0]}-${surahEntry.verses[1] || surahEntry.verses[0]}`,
       };
     });
 
-    // Create a summary of what's being read
+    // Create a summary of what's being read - now with surah names
     const summary = surahInfo
-      .map((s) => `Surah ${s.number}: Verses ${s.verses}`)
+      .map((s) => `Surah ${s.number} (${s.name}): Verses ${s.verses}`)
       .join(", ");
 
     return {
