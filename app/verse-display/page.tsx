@@ -27,7 +27,7 @@ import { VerseContent } from "@/components/verse-display/verse-content";
 import { TafsirSection } from "@/components/verse-display/tafsir-section";
 
 // Disable static generation for this page
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 // Type definitions for the day plan data
 interface SurahEntry {
@@ -48,11 +48,26 @@ function VerseDisplayContent() {
 
   // Get the day from URL query parameters
   const dayParam = searchParams.get("day");
+  const surahParam = searchParams.get("surah");
+  const ayatParam = searchParams.get("ayat");
+
   const initialDay = dayParam ? parseInt(dayParam) : 1;
+  const initialSurah = surahParam ? parseInt(surahParam) : 1;
+
+  // Handle ayat parameter which could be a single number or a range like "1-5"
+  let initialAyah = 1;
+  if (ayatParam) {
+    // If it's a range, get the first number
+    if (ayatParam.includes("-")) {
+      initialAyah = parseInt(ayatParam.split("-")[0]);
+    } else {
+      initialAyah = parseInt(ayatParam);
+    }
+  }
 
   const [currentDay, setCurrentDay] = useState<number>(initialDay);
-  const [currentSurah, setCurrentSurah] = useState<number>(1);
-  const [currentAyah, setCurrentAyah] = useState<number>(1);
+  const [currentSurah, setCurrentSurah] = useState<number>(initialSurah);
+  const [currentAyah, setCurrentAyah] = useState<number>(initialAyah);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("english");
   const [selectedReciter, setSelectedReciter] = useState("mishary");
@@ -66,22 +81,43 @@ function VerseDisplayContent() {
 
   // Find the first Ayah for the selected day
   useEffect(() => {
-    const findAyahForDay = () => {
-      // Find the day entry in the plan data
-      const dayEntry = dayPlanData.find((entry) =>
-        entry.name.includes(`day ${currentDay}`)
-      ) as DayEntry | undefined;
+    // Only use plan data to set position if surah and ayat are not specified in URL
+    if (!surahParam && !ayatParam) {
+      const findAyahForDay = () => {
+        // Find the day entry in the plan data
+        const dayEntry = dayPlanData.find((entry) =>
+          entry.name.includes(`day ${currentDay}`)
+        ) as DayEntry | undefined;
 
-      if (dayEntry && dayEntry.surah.length > 0) {
-        // Get the first surah and its first verse
-        const firstSurah = dayEntry.surah[0];
-        setCurrentSurah(firstSurah.number);
-        setCurrentAyah(firstSurah.verses[0]);
-      }
-    };
+        if (dayEntry && dayEntry.surah.length > 0) {
+          // Get the first surah and its first verse
+          const firstSurah = dayEntry.surah[0];
+          setCurrentSurah(firstSurah.number);
+          setCurrentAyah(firstSurah.verses[0]);
+        }
+      };
 
-    findAyahForDay();
-  }, [currentDay]);
+      findAyahForDay();
+    }
+  }, [currentDay, surahParam, ayatParam]);
+
+  // Function to update the URL query parameters
+  const updateUrlParams = (surah: number, ayah: number, day: number) => {
+    const params = new URLSearchParams();
+    params.set("surah", surah.toString());
+    params.set("ayat", ayah.toString());
+    params.set("day", day.toString());
+
+    // Update URL without triggering a page reload
+    router.push(`/verse-display?${params.toString()}`, { scroll: false });
+  };
+
+  // Update URL when surah or ayah changes
+  useEffect(() => {
+    if (ayahData) {
+      updateUrlParams(currentSurah, currentAyah, currentDay);
+    }
+  }, [currentSurah, currentAyah, currentDay, ayahData]);
 
   // Function to navigate to the next Ayah
   const goToNextAyah = () => {
@@ -247,7 +283,11 @@ function VerseDisplayContent() {
 
               {/* Audio Player */}
               <AudioPlayer
-                audioUrl={ayahData.audio && ayahData.audio["1"] ? ayahData.audio["1"].url : null}
+                audioUrl={
+                  ayahData.audio && ayahData.audio["1"]
+                    ? ayahData.audio["1"].url
+                    : null
+                }
               />
             </Card>
 
@@ -284,12 +324,14 @@ function VerseDisplayContent() {
 
 export default function VerseDisplay() {
   return (
-    <Suspense fallback={
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading...</span>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading...</span>
+        </div>
+      }
+    >
       <VerseDisplayContent />
     </Suspense>
   );
