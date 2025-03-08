@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
@@ -26,6 +26,9 @@ import { AudioPlayer } from "@/components/verse-display/audio-player";
 import { VerseContent } from "@/components/verse-display/verse-content";
 import { TafsirSection } from "@/components/verse-display/tafsir-section";
 
+// Disable static generation for this page
+export const dynamic = 'force-dynamic';
+
 // Type definitions for the day plan data
 interface SurahEntry {
   number: number;
@@ -38,7 +41,7 @@ interface DayEntry {
   surah: SurahEntry[];
 }
 
-export default function VerseDisplay() {
+function VerseDisplayContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -276,5 +279,18 @@ export default function VerseDisplay() {
         ) : null}
       </main>
     </div>
+  );
+}
+
+export default function VerseDisplay() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading...</span>
+      </div>
+    }>
+      <VerseDisplayContent />
+    </Suspense>
   );
 }
