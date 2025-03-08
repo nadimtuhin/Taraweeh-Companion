@@ -23,7 +23,7 @@ interface RawDayEntry {
 
 interface SurahInfo {
   number: string;
-  name: string;  // Added name field
+  name: string; // Added name field
   verses: string;
 }
 
@@ -36,7 +36,9 @@ interface TransformedDayEntry {
 }
 
 // Transform reading plan data to the format needed by the UI
-const transformReadingPlan = (completedDays: number[]): TransformedDayEntry[] => {
+const transformReadingPlan = (
+  completedDays: number[]
+): TransformedDayEntry[] => {
   return readingPlanData.map((day, index) => {
     // Extract day number from the name
     // More robust parsing - handle potential format issues
@@ -47,8 +49,10 @@ const transformReadingPlan = (completedDays: number[]): TransformedDayEntry[] =>
     const surahInfo: SurahInfo[] = day.surah.map((surahEntry) => {
       return {
         number: surahEntry.number.toString(),
-        name: surahEntry.name,  // Include the surah name
-        verses: `${surahEntry.verses[0]}-${surahEntry.verses[1] || surahEntry.verses[0]}`,
+        name: surahEntry.name, // Include the surah name
+        verses: `${surahEntry.verses[0]}-${
+          surahEntry.verses[1] || surahEntry.verses[0]
+        }`,
       };
     });
 
@@ -76,19 +80,24 @@ export default function DaySelection() {
 
   useEffect(() => {
     // Load completed days from localStorage
-    const savedCompletedDays = localStorage.getItem('completedDays');
-    const parsedCompletedDays = savedCompletedDays ? JSON.parse(savedCompletedDays) : [];
+    const savedCompletedDays = localStorage.getItem("completedDays");
+    const parsedCompletedDays = savedCompletedDays
+      ? JSON.parse(savedCompletedDays)
+      : [];
     setCompletedDays(parsedCompletedDays);
     setReadingPlan(transformReadingPlan(parsedCompletedDays));
   }, []);
 
   const markDayCompleted = (dayNumber: number) => {
     const updatedCompletedDays = [...completedDays];
-    
+
     if (!updatedCompletedDays.includes(dayNumber)) {
       updatedCompletedDays.push(dayNumber);
       setCompletedDays(updatedCompletedDays);
-      localStorage.setItem('completedDays', JSON.stringify(updatedCompletedDays));
+      localStorage.setItem(
+        "completedDays",
+        JSON.stringify(updatedCompletedDays)
+      );
       setReadingPlan(transformReadingPlan(updatedCompletedDays));
     }
   };
@@ -160,10 +169,10 @@ export default function DaySelection() {
                     {day.completed ? "Review Reading" : "Start Reading"}
                     <ArrowRight className="w-4 h-4" />
                   </Button>
-                  
+
                   {!day.completed && (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => markDayCompleted(day.day)}
                       className="flex items-center justify-center"
                     >
