@@ -9,19 +9,44 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import readingPlanData from "@/docs/27.json";
 
+// Type definitions
+interface SurahEntry {
+  number: number;
+  name: string;
+  verses: number[];
+}
+
+interface RawDayEntry {
+  name: string;
+  surah: SurahEntry[];
+}
+
+interface SurahInfo {
+  number: string;
+  verses: string;
+}
+
+interface TransformedDayEntry {
+  day: number;
+  date: Date;
+  surahInfo: SurahInfo[];
+  completed: boolean;
+  summary: string;
+}
+
 // Transform reading plan data to the format needed by the UI
-const transformReadingPlan = () => {
+const transformReadingPlan = (completedDays: number[]): TransformedDayEntry[] => {
   return readingPlanData.map((day, index) => {
     // Extract day number from the name
-    const dayNumber = parseInt(day.name.split(" ")[1]);
+    // More robust parsing - handle potential format issues
+    const dayMatch = day.name.match(/\d+/);
+    const dayNumber = dayMatch ? parseInt(dayMatch[0]) : index + 1;
 
     // Format surah information
-    const surahInfo = day.surah.map((surahObj) => {
-      const surahNumber = Object.keys(surahObj)[0];
-      const [startVerse, endVerse] = surahObj[surahNumber];
+    const surahInfo: SurahInfo[] = day.surah.map((surahEntry) => {
       return {
-        number: surahNumber,
-        verses: `${startVerse}-${endVerse}`,
+        number: surahEntry.number.toString(),
+        verses: `${surahEntry.verses[0]}-${surahEntry.verses[1] || surahEntry.verses[0]}`,
       };
     });
 
@@ -34,7 +59,7 @@ const transformReadingPlan = () => {
       day: dayNumber,
       date: addDays(startOfToday(), index),
       surahInfo,
-      completed: index < 5, // Example: first 5 days completed
+      completed: completedDays.includes(dayNumber),
       summary,
     };
   });
@@ -42,13 +67,29 @@ const transformReadingPlan = () => {
 
 export default function DaySelection() {
   const router = useRouter();
-  const [currentPage, setCurrentPage] = useState(0);
-  const [readingPlan, setReadingPlan] = useState([]);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [readingPlan, setReadingPlan] = useState<TransformedDayEntry[]>([]);
+  const [completedDays, setCompletedDays] = useState<number[]>([]);
   const itemsPerPage = 9;
 
   useEffect(() => {
-    setReadingPlan(transformReadingPlan());
+    // Load completed days from localStorage
+    const savedCompletedDays = localStorage.getItem('completedDays');
+    const parsedCompletedDays = savedCompletedDays ? JSON.parse(savedCompletedDays) : [];
+    setCompletedDays(parsedCompletedDays);
+    setReadingPlan(transformReadingPlan(parsedCompletedDays));
   }, []);
+
+  const markDayCompleted = (dayNumber: number) => {
+    const updatedCompletedDays = [...completedDays];
+    
+    if (!updatedCompletedDays.includes(dayNumber)) {
+      updatedCompletedDays.push(dayNumber);
+      setCompletedDays(updatedCompletedDays);
+      localStorage.setItem('completedDays', JSON.stringify(updatedCompletedDays));
+      setReadingPlan(transformReadingPlan(updatedCompletedDays));
+    }
+  };
 
   const totalPages = Math.ceil(readingPlan.length / itemsPerPage);
 
@@ -108,14 +149,26 @@ export default function DaySelection() {
                   </ScrollArea>
                 </div>
 
-                <Button
-                  className="w-full mt-4 flex items-center justify-center gap-2"
-                  variant={day.completed ? "secondary" : "default"}
-                  onClick={() => router.push(`/verse-display?day=${day.day}`)}
-                >
-                  {day.completed ? "Review Reading" : "Start Reading"}
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-2 mt-4">
+                  <Button
+                    className="flex-1 flex items-center justify-center gap-2"
+                    variant={day.completed ? "secondary" : "default"}
+                    onClick={() => router.push(`/verse-display?day=${day.day}`)}
+                  >
+                    {day.completed ? "Review Reading" : "Start Reading"}
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                  
+                  {!day.completed && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => markDayCompleted(day.day)}
+                      className="flex items-center justify-center"
+                    >
+                      <Check className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </Card>
           ))}
