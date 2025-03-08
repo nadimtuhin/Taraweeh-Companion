@@ -88,7 +88,7 @@ export default function Home() {
                 <span>Daily Progress</span>
                 <span>{progress}%</span>
               </div>
-              {/* <Progress value={progress} className="h-2" /> */}
+              <Progress value={progress} className="h-2" />
             </div>
           </div>
         </Card>

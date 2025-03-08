@@ -1,11 +1,6 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-Audio Recitation Screen
-Design intuitive audio controls including play, pause, rewind, and fast-forward.
-Create a reciter selection menu populated dynamically from the Quran API.
-Offer options to loop audio playback of selected verses or sections.
-Provide easy access back to verse details from the audio player.
-Display verse numbers and corresponding text synchronized with audio playback.
-Allow offline caching of selected audio recitations for playback without internet.
+public/sw.js
+public/workbox-*.js
+public/workbox-*.js.map
 
 # dependencies
 /node_modules
