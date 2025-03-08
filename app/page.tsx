@@ -18,7 +18,7 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { format, isToday, parseISO, differenceInDays } from "date-fns";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import readingPlan from "@/docs/27.json";
 
 // Define types for the reading plan data
@@ -35,6 +35,8 @@ type ReadingDay = {
 
 export default function Home() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(30); // Example progress
   const [lastReadingDay, setLastReadingDay] = useState<Date | null>(null);
@@ -47,32 +49,82 @@ export default function Home() {
     surahs: [{ name: "Al-Fatiha", number: 1, verses: "1-7" }],
   });
 
-  // Fetch last reading day and current reading day from localStorage on component mount
+  // Fetch reading information from URL params or localStorage
   useEffect(() => {
-    const storedLastReading = localStorage.getItem("lastReadingDay");
-    const storedDayNumber = localStorage.getItem("currentReadingDay");
+    // Check if surah and ayat are in URL params first
+    const surahParam = searchParams.get('surah');
+    const ayatParam = searchParams.get('ayat');
+    const dayParam = searchParams.get('day');
+    
+    let dayToUse = 1;
+    let foundFromUrl = false;
 
-    if (storedLastReading) {
-      setLastReadingDay(parseISO(storedLastReading));
-    } else {
-      // Default to today if no reading history exists
+    // If we have day param in URL, use that
+    if (dayParam) {
+      dayToUse = parseInt(dayParam, 10);
+      foundFromUrl = true;
+    } 
+    // If we have surah param, find which day contains it
+    else if (surahParam) {
+      const surahNumber = parseInt(surahParam, 10);
+      const ayatRange = ayatParam ? ayatParam.split('-').map(Number) : null;
+      
+      // Find the day that contains this surah and possibly verse range
+      for (let i = 0; i < readingPlan.length; i++) {
+        const day = readingPlan[i];
+        for (const surah of day.surah) {
+          if (surah.number === surahNumber) {
+            // If we have ayat range, check if it falls within this day's range
+            if (ayatRange && 
+                surah.verses[0] <= ayatRange[0] && 
+                surah.verses[1] >= ayatRange[1]) {
+              dayToUse = i + 1; // Convert from 0-indexed to 1-indexed
+              foundFromUrl = true;
+              break;
+            } 
+            // If no ayat range, just use the day with this surah
+            else if (!ayatRange) {
+              dayToUse = i + 1;
+              foundFromUrl = true;
+              break;
+            }
+          }
+        }
+        if (foundFromUrl) break;
+      }
+    }
+
+    // If nothing found in URL, check localStorage
+    if (!foundFromUrl) {
+      const storedLastReading = localStorage.getItem("lastReadingDay");
+      if (storedLastReading) {
+        setLastReadingDay(parseISO(storedLastReading));
+      } else {
+        setLastReadingDay(new Date());
+        localStorage.setItem("lastReadingDay", new Date().toISOString());
+      }
+
+      const storedDayNumber = localStorage.getItem("currentReadingDay");
+      if (storedDayNumber) {
+        dayToUse = parseInt(storedDayNumber, 10);
+      } else {
+        localStorage.setItem("currentReadingDay", "1");
+      }
+    }
+
+    setCurrentDayNumber(dayToUse);
+    updateReadingContent(dayToUse);
+    
+    // If we found params in URL but they're not in localStorage, update localStorage
+    if (foundFromUrl) {
+      localStorage.setItem("currentReadingDay", dayToUse.toString());
+      // Update the last reading day to today since user accessed via URL
       setLastReadingDay(new Date());
       localStorage.setItem("lastReadingDay", new Date().toISOString());
     }
+  }, [searchParams]);
 
-    // Set the current day in the reading plan (1-27)
-    if (storedDayNumber) {
-      const dayNum = parseInt(storedDayNumber, 10);
-      setCurrentDayNumber(dayNum);
-      updateReadingContent(dayNum);
-    } else {
-      // Default to day 1 if no day is stored
-      localStorage.setItem("currentReadingDay", "1");
-      updateReadingContent(1);
-    }
-  }, []);
-
-  // Update reading content based on the current day in the reading plan
+  // Update reading content and URL query params
   const updateReadingContent = (dayNum: number) => {
     // Find the reading day data from the plan (1-indexed)
     // Handle potential issues with the readingPlan data
@@ -101,11 +153,41 @@ export default function Home() {
       day: dayData.name,
       surahs: formattedSurahs,
     });
+
+    // Update the URL with the first surah and its verse range from this day's reading
+    if (dayData.surah.length > 0) {
+      const firstSurah = dayData.surah[0];
+      updateUrlParams({
+        day: dayNum,
+        surah: firstSurah.number,
+        ayat: `${firstSurah.verses[0]}-${firstSurah.verses[1]}`
+      });
+    }
+  };
+
+  // Helper function to update URL parameters without full page reload
+  const updateUrlParams = ({ day, surah, ayat }) => {
+    const params = new URLSearchParams();
+    if (day) params.set('day', day.toString());
+    if (surah) params.set('surah', surah.toString());
+    if (ayat) params.set('ayat', ayat.toString());
+    
+    // Replace the current URL with the new parameters
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const resumeReading = () => {
     setIsPlaying(!isPlaying);
-    // Additional logic to actually resume reading could go here
+    
+    // When user plays audio, ensure the URL reflects current reading position
+    if (!isPlaying && readingContent.surahs.length > 0) {
+      const currentSurah = readingContent.surahs[0];
+      updateUrlParams({
+        day: currentDayNumber,
+        surah: currentSurah.number,
+        ayat: currentSurah.verses
+      });
+    }
   };
 
   // Function to handle starting today's reading if user is behind
@@ -220,18 +302,29 @@ export default function Home() {
           <div className="space-y-4">
             {readingContent.surahs.map((surah, index) => (
               <div key={index}>
-                <h3 className="text-lg font-medium mb-1">Surah {surah.name}</h3>
+                <h3 className="text-lg font-medium mb-1">
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto font-medium"
+                    onClick={() => updateUrlParams({
+                      day: currentDayNumber,
+                      surah: surah.number,
+                      ayat: surah.verses
+                    })}
+                  >
+                    Surah {surah.name} ({surah.number})
+                  </Button>
+                </h3>
                 <p className="text-muted-foreground">Verses {surah.verses}</p>
               </div>
             ))}
 
-            <div className="space-y-2 mt-4">
+            <div className="space-y-2 mt-4"></div>
               <div className="flex justify-between text-sm">
                 <span>Overall Progress</span>
                 <span>{Math.round((currentDayNumber / 27) * 100)}%</span>
               </div>
               <Progress value={(currentDayNumber / 27) * 100} className="h-2" />
-            </div>
           </div>
         </Card>
 
@@ -239,7 +332,7 @@ export default function Home() {
         <Card className="p-6 bg-primary/5">
           <h3 className="text-lg font-medium mb-3">Daily Inspiration</h3>
           <blockquote className="text-muted-foreground italic">
-            "Indeed, with hardship comes ease."
+            &ldquo;Indeed, with hardship comes ease.&rdquo;
             <footer className="text-sm mt-2 not-italic">
               — Surah Ash-Sharh [94:6]
             </footer>
