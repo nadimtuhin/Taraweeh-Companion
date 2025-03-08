@@ -11,7 +11,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: Infinity,
       retry: 3,
-      cacheTime: Infinity,
+      // cacheTime: Infinity,
     },
   },
 });

@@ -14,6 +14,7 @@ interface QuranDB extends DBSchema {
   bookmarks: {
     key: string;
     value: {
+      id: string;
       surahNumber: number;
       ayahNumber: number;
       timestamp: number;
@@ -22,6 +23,7 @@ interface QuranDB extends DBSchema {
   audioCache: {
     key: string;
     value: {
+      url: string;
       blob: Blob;
       timestamp: number;
     };
