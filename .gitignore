@@ -1,0 +1,42 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+Audio Recitation Screen
+Design intuitive audio controls including play, pause, rewind, and fast-forward.
+Create a reciter selection menu populated dynamically from the Quran API.
+Offer options to loop audio playback of selected verses or sections.
+Provide easy access back to verse details from the audio player.
+Display verse numbers and corresponding text synchronized with audio playback.
+Allow offline caching of selected audio recitations for playback without internet.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
