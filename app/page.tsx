@@ -30,15 +30,19 @@ export default function Home() {
                 </Button>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <BookMarked className="w-4 h-4" />
-                  Bookmarks
+                <Button variant="ghost" className="flex items-center gap-2" asChild>
+                  <Link href="/bookmarks">
+                    <BookMarked className="w-4 h-4" />
+                    Bookmarks
+                  </Link>
                 </Button>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  Settings
+                <Button variant="ghost" className="flex items-center gap-2" asChild>
+                  <Link href="/settings">
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </Link>
                 </Button>
               </NavigationMenuItem>
             </NavigationMenuList>
