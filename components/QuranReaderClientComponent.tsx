@@ -178,11 +178,14 @@ export default function QuranReaderClientComponent() {
     // When user plays audio, ensure the URL reflects current reading position
     if (!isPlaying && readingContent.surahs.length > 0) {
       const currentSurah = readingContent.surahs[0];
-      updateUrlParams({
-        day: currentDayNumber,
-        surah: currentSurah.number,
-        ayat: currentSurah.verses,
-      });
+
+      // Navigate to verse display page
+      const params = new URLSearchParams();
+      params.set("day", currentDayNumber.toString());
+      params.set("surah", currentSurah.number.toString());
+      params.set("ayat", currentSurah.verses);
+
+      router.push(`/verse-display?${params.toString()}`);
     }
   };
 
