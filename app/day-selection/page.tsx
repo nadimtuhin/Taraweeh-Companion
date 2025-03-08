@@ -1,27 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { format, addDays, startOfToday } from "date-fns";
 import { ChevronLeft, ChevronRight, Check, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import readingPlanData from "@/docs/27.json";
 
-// Example reading plan data
-const readingPlan = Array.from({ length: 27 }, (_, i) => ({
-  day: i + 1,
-  date: addDays(startOfToday(), i),
-  surah: "Al-Baqarah",
-  verses: `${i * 5 + 1}-${i * 5 + 5}`,
-  completed: i < 5, // Example: first 5 days completed
-  summary: "This section discusses the qualities of the believers and the importance of faith.",
-}));
+// Transform reading plan data to the format needed by the UI
+const transformReadingPlan = () => {
+  return readingPlanData.map((day, index) => {
+    // Extract day number from the name
+    const dayNumber = parseInt(day.name.split(" ")[1]);
+
+    // Format surah information
+    const surahInfo = day.surah.map((surahObj) => {
+      const surahNumber = Object.keys(surahObj)[0];
+      const [startVerse, endVerse] = surahObj[surahNumber];
+      return {
+        number: surahNumber,
+        verses: `${startVerse}-${endVerse}`,
+      };
+    });
+
+    // Create a summary of what's being read
+    const summary = surahInfo
+      .map((s) => `Surah ${s.number}: Verses ${s.verses}`)
+      .join(", ");
+
+    return {
+      day: dayNumber,
+      date: addDays(startOfToday(), index),
+      surahInfo,
+      completed: index < 5, // Example: first 5 days completed
+      summary,
+    };
+  });
+};
 
 export default function DaySelection() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(0);
+  const [readingPlan, setReadingPlan] = useState([]);
   const itemsPerPage = 9;
+
+  useEffect(() => {
+    setReadingPlan(transformReadingPlan());
+  }, []);
+
   const totalPages = Math.ceil(readingPlan.length / itemsPerPage);
 
   const currentItems = readingPlan.slice(
@@ -72,20 +100,18 @@ export default function DaySelection() {
 
               <div className="space-y-3">
                 <div>
-                  <h4 className="font-medium">Surah {day.surah}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Verses {day.verses}
-                  </p>
+                  <h4 className="font-medium">Reading Plan</h4>
+                  <ScrollArea className="h-16 mt-1">
+                    <p className="text-sm text-muted-foreground">
+                      {day.summary}
+                    </p>
+                  </ScrollArea>
                 </div>
-
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {day.summary}
-                </p>
 
                 <Button
                   className="w-full mt-4 flex items-center justify-center gap-2"
                   variant={day.completed ? "secondary" : "default"}
-                  onClick={() => router.push("/verse-display")}
+                  onClick={() => router.push(`/verse-display?day=${day.day}`)}
                 >
                   {day.completed ? "Review Reading" : "Start Reading"}
                   <ArrowRight className="w-4 h-4" />
@@ -98,7 +124,7 @@ export default function DaySelection() {
         <div className="flex justify-center items-center gap-4 mt-8">
           <Button
             variant="outline"
-            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+            onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
             disabled={currentPage === 0}
           >
             <ChevronLeft className="w-4 h-4" />
@@ -108,7 +134,9 @@ export default function DaySelection() {
           </span>
           <Button
             variant="outline"
-            onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+            onClick={() =>
+              setCurrentPage((p) => Math.min(totalPages - 1, p + 1))
+            }
             disabled={currentPage === totalPages - 1}
           >
             <ChevronRight className="w-4 h-4" />
