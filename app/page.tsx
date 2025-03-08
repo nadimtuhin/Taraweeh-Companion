@@ -7,7 +7,7 @@ import {
   NavigationMenuItem,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import QuranReaderClientComponent from "./QuranReaderClientComponent";
+import QuranReaderClientComponent from "@/components/QuranReaderClientComponent";
 import Link from "next/link";
 export default function Home() {
   return (
