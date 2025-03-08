@@ -268,10 +268,10 @@ export default function BookmarksProgress() {
                     {Math.round((progressData.completedDays / progressData.totalDays) * 100)}%
                   </span>
                 </div>
-                <Progress
+                {/* <Progress
                   value={(progressData.completedDays / progressData.totalDays) * 100}
                   className="h-2"
-                />
+                /> */}
               </div>
             </div>
 
