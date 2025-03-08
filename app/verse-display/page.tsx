@@ -80,12 +80,57 @@ function VerseDisplayContent() {
   const [autoNext, setAutoNext] = useState(false);
   const autoNextTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Function to calculate the next ayah
+  const getNextAyahDetails = useCallback(() => {
+    // Find the current day entry
+    const dayEntry = dayPlanData.find((entry) =>
+      entry.name.includes(`day ${currentDay}`)
+    ) as DayEntry | undefined;
+
+    if (!dayEntry) return { surah: currentSurah, ayah: currentAyah };
+
+    // Find the current surah in the day's reading plan
+    const currentSurahIndex = dayEntry.surah.findIndex(
+      (surah) => surah.number === currentSurah
+    );
+
+    if (currentSurahIndex === -1) return { surah: currentSurah, ayah: currentAyah };
+
+    const currentSurahEntry = dayEntry.surah[currentSurahIndex];
+    const [startVerse, endVerse] = currentSurahEntry.verses;
+
+    // If we're not at the last verse of the current surah
+    if (currentAyah < endVerse) {
+      return { surah: currentSurah, ayah: currentAyah + 1 };
+    }
+    // If we're at the last verse but there are more surahs in this day
+    else if (currentSurahIndex < dayEntry.surah.length - 1) {
+      const nextSurahEntry = dayEntry.surah[currentSurahIndex + 1];
+      return { surah: nextSurahEntry.number, ayah: nextSurahEntry.verses[0] };
+    }
+    // If we're at the last verse of the last surah in this day
+    else if (currentDay < 27) {
+      // For now, we'll just return the current position since fetching across days is more complex
+      return { surah: currentSurah, ayah: currentAyah };
+    }
+    
+    return { surah: currentSurah, ayah: currentAyah };
+  }, [currentAyah, currentDay, currentSurah]);
+
+  // Calculate the next ayah details for preloading
+  const nextAyahDetails = getNextAyahDetails();
+
   // Fetch the Ayah data using the hook
   const {
     data: ayahData,
     isLoading,
     isError,
   } = useAyah(currentSurah, currentAyah);
+
+  // Prefetch the next Ayah data
+  const {
+    data: nextAyahData,
+  } = useAyah(nextAyahDetails.surah, nextAyahDetails.ayah);
 
   // Find the first Ayah for the selected day
   useEffect(() => {
@@ -410,8 +455,7 @@ function VerseDisplayContent() {
                     >
                       Auto Next (15s)
                     </label>
-                  </div>
-                </div>
+                  </div>                </div>
                 <div className="text-sm text-muted-foreground">
                   Use arrow keys (←→↑↓) to navigate
                 </div>
